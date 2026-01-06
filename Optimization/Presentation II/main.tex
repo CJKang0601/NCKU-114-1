@@ -1,0 +1,408 @@
+\documentclass{beamer}
+\usetheme{AnnArbor}
+\usecolortheme{spruce}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+% Custom headline to show all sections
+\setbeamertemplate{headline}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=3.5ex,dp=1.5ex]{section in head/foot}%
+    \usebeamerfont{section in head/foot}%
+    \fontsize{8pt}{10pt}\selectfont%
+    \insertsectionnavigationhorizontal{\paperwidth}{}{\hskip0pt plus1fill}{\hskip0pt plus1filll}
+  \end{beamercolorbox}%
+  }
+}
+
+% Footer with section progress
+\setbeamertemplate{footline}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+    \usebeamerfont{author in head/foot}\insertshortauthor
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+    \usebeamerfont{title in head/foot}\insertshorttitle
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+    \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{2em}
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+\title[AdamW]{Decoupled Weight Decay Regularization}
+\subtitle{Loshchilov \& Hutter (ICLR 2019)}
+\author[TEAM 5]{Min-Tso Ko RE6144019\\ Yu-Jou Hsiao RE6141045\\Cheng-Jun Kang RE6144051}
+\institute{DS @ NCKU}
+% \date{\today}
+\date{November 10, 2025}
+
+\begin{document}
+
+\frame{\titlepage}
+
+% ========== Section 1: Problem ==========
+\section{The Problem}
+
+\begin{frame}
+\frametitle{The Problem with Adam}
+
+\textbf{Key Issue:} L2 regularization $\neq$ Weight decay in Adam
+
+\vspace{1em}
+
+\begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+        \textbf{SGD:} Equivalent
+        \begin{itemize}
+            \item $\mathcal{L}(\theta) = f(\theta) + \frac{\lambda}{2}\|\theta\|^2$
+            \item $g_t = \nabla f(\theta_t) + \lambda \theta_t$
+            \item Update:
+            $\theta_{t+1} =  $\theta_{t} - \alpha g_t$
+            $\theta_{t+1} = (1-\alpha\lambda)\theta_t - \alpha \nabla f(\theta_t)$
+            \item Same as weight decay!
+        \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+        \textbf{Adam:} NOT Equivalent
+        \begin{itemize}
+            \item $m_t = \beta_1 m_{t-1} + (1-\beta_1)g_t$
+            \item $v_t = \beta_2 v_{t-1} + (1-\beta_2)g_t^2$
+            \item $\hat{m}_t = m_t/(1-\beta_1^t)$
+            \item $\hat{v}_t = v_t/(1-\beta_2^t)$
+            \item Update:
+            $\theta_{t+1} = \theta_t - \alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}$
+            \item Large gradients\\
+            $\rightarrow$ less regularization\\
+            $\rightarrow$ Poor generalization
+        \end{itemize}
+    \end{column}
+\end{columns}
+
+% \vspace{1.5em}
+
+\begin{block}{Result}
+Adam with L2 regularization performs worse than SGD on image classification tasks
+\end{block}
+
+\end{frame}
+
+% ========== Section 2: Solution ==========
+\section{AdamW Solution}
+
+\begin{frame}
+\frametitle{The Solution: AdamW}
+
+\textbf{Core Idea:} Decouple weight decay from gradient-based update
+
+\vspace{1em}
+
+\begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+        \textbf{Adam}
+        \begin{enumerate}
+            \item $g_t = \nabla f(\theta_t) + \lambda \theta_t$
+            \item $m_t, v_t$ updates
+            \item $\theta_{t+1} = \theta_t - \alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}$
+        \end{enumerate}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+        \textbf{AdamW}
+        \begin{enumerate}
+            \item $g_t = \nabla f(\theta_t)$ \textcolor{blue}{(no $\lambda\theta_t$)}
+            \item $m_t, v_t$ updates
+            \item $\theta_{t+1} = \theta_t - \alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}$ \textcolor{blue}{$- \lambda\theta_t$}
+        \end{enumerate}
+    \end{column}
+\end{columns}
+
+\vspace{1.5em}
+
+\begin{block}{Benefits}
+\begin{itemize}
+    \item Weight decay applied \textbf{uniformly} to all parameters
+    \item Decouples learning rate $\alpha$ and weight decay $\lambda$
+    \item Simple fix: just one line of code!
+\end{itemize}
+\end{block}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Theoretical Justification}
+
+\textbf{Proposition 1:} For adaptive gradient methods, L2 reg $\neq$ weight decay
+
+\vspace{0.5em}
+
+\textbf{Proof sketch:}
+\begin{itemize}
+    \item Adam update: $\theta_{t+1} = \theta_t - \alpha M_t g_t$ where $M_t \neq kI$
+    \item For equivalence, need: $\alpha M_t \lambda' \theta_t = \lambda \theta_t$ for all $\theta_t$
+    \item Requires $M_t = kI$ (constant $\times$ identity), but Adam's $M_t$ is adaptive!
+    \item Therefore, no L2 coefficient $\lambda'$ can make them equivalent
+\end{itemize}
+
+\vspace{1em}
+
+\textbf{Proposition 2:} For fixed preconditioner, decoupled weight decay $\equiv$ scale-adjusted L2:
+\[
+f^{sreg}_t(\theta) = f_t(\theta) + \frac{\lambda'}{2\alpha} \|\theta \odot \sqrt{s}\|_2^2
+\]
+
+This means stronger regularization on parameters with large historical gradients!
+
+\end{frame}
+
+% ========== Section 3: Key Experiments ==========
+\section{Experiments}
+
+\begin{frame}
+\frametitle{Experiment 1: Performance Comparison }
+
+\textbf{Setup:} 26 2x64d ResNet on CIFAR-10, 100 epochs
+
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.95\textwidth,height=0.55\textheight,keepaspectratio]{figure1.jpg}
+    \caption{\footnotesize Top row: Adam (L2). Bottom row: AdamW. Darker = better performance. AdamW consistently achieves lower test error across all learning rate schedules.}
+\end{figure}
+
+
+
+{\footnotesize \textbf{Key Results:} AdamW outperforms Adam in all schedules with \textbf{15\% improvement}.}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Experiment 2: Hyperparameter Decoupling }
+
+\textbf{Goal:} Verify that $\alpha$ and $\lambda$ are decoupled in AdamW
+
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.95\textwidth,height=0.55\textheight,keepaspectratio]{figure2.jpg}
+    \caption{\footnotesize Heatmaps of test error for different $(\alpha, \lambda)$ combinations. Diagonal pattern = coupled. Grid pattern = decoupled. Top: SGD vs SGDW. Bottom: Adam vs AdamW.}
+\end{figure}
+
+
+
+{\footnotesize \textbf{Result:} AdamW shows grid pattern $\rightarrow$ easier hyperparameter tuning!}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Experiment 3: Long Training \& Generalization }
+
+\textbf{Setup:} 26 2x96d ResNet on CIFAR-10, 1800 epochs
+
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.95\textwidth,height=0.55\textheight,keepaspectratio]{figure3.jpg}
+    \caption{\footnotesize Top left: Training loss curves. Top right: Test error curves. Bottom: Test error vs. training loss scatter plot. AdamW (blue) shows better convergence and generalization than Adam (red).}
+\end{figure}
+
+\vspace{-1em}
+
+{\footnotesize \textbf{Key Finding:} At the same training loss, AdamW achieves lower test error.}
+
+\end{frame}
+
+% ========== Section 4: Impact ==========
+\section{Impact \& Summary}
+
+\begin{frame}
+\frametitle{Additional Contributions}
+
+\textbf{1. Normalized Weight Decay}
+\begin{itemize}
+    \item Problem: Optimal $\lambda$ depends on training budget
+    \item Solution: $\lambda = \lambda_{norm}\sqrt{\frac{b}{BT}}$ where $b$=batch size, $B$=dataset size, $T$=epochs
+    \item Makes hyperparameters more robust across different training lengths
+\end{itemize}
+
+\vspace{1em}
+
+\textbf{2. Warm Restarts (AdamWR)}
+\begin{itemize}
+    \item Combine AdamW with cosine annealing + periodic restarts
+    \item Improves anytime performance by up to \textbf{10x speedup}
+    \item Achieves same final accuracy in fewer epochs
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Impact \& Adoption}
+
+\textbf{Widely Adopted in Practice:}
+\begin{itemize}
+    \item \textbf{PyTorch:} \texttt{torch.optim.AdamW}
+    \item \textbf{TensorFlow:} \texttt{tf.keras.optimizers.AdamW}
+    \item \textbf{Hugging Face:} Default optimizer for BERT, GPT, etc.
+    \item Used in training most modern large language models
+\end{itemize}
+
+\vspace{1em}
+
+\textbf{Real-World Applications:}
+\begin{itemize}
+    \item Face detection (Wang et al., 2018): 10x faster with same accuracy
+    \item EEG classification (Völker et al., 2018): 72\% vs 61\% accuracy
+    \item NLP (Radford et al., 2018): State-of-the-art on multiple benchmarks
+\end{itemize}
+
+\vspace{1em}
+
+\textbf{Why Important?}
+\begin{itemize}
+    \item Simple fix (1 line) with major impact (15\% improvement)
+    \item Makes Adam competitive with SGD on vision tasks
+    \item Simplifies hyperparameter tuning
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Summary}
+
+\begin{block}{Problem}
+L2 regularization in Adam is incorrectly implemented and doesn't work as intended
+\end{block}
+
+\begin{block}{Solution: AdamW}
+Decouple weight decay from gradient-based update
+\[
+\theta_{t+1} = \theta_t - \alpha \frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon} - \lambda\theta_t
+\]
+\end{block}
+
+\begin{block}{Results}
+\begin{itemize}
+    \item 15\% improvement in test error
+    \item Decoupled hyperparameters (easier tuning)
+    \item Better generalization than Adam with L2
+    \item Competitive with SGD on image classification
+\end{itemize}
+\end{block}
+
+\begin{block}{Impact}
+Now the standard optimizer for training Transformers and LLMs
+\end{block}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Key Takeaways}
+
+\begin{enumerate}
+    \item \textbf{Simple but overlooked:} L2 reg = weight decay in SGD, but NOT in Adam
+    
+    \item \textbf{One-line fix:} Just decouple the weight decay step
+    
+    \item \textbf{Major improvement:} 15\% better generalization
+    
+    \item \textbf{Easier tuning:} Decoupled hyperparameters
+    
+    \item \textbf{Wide adoption:} Standard for modern deep learning
+\end{enumerate}
+
+\vspace{2em}
+
+\begin{center}
+\textbf{Lesson:} Small implementation details can have huge impacts!
+\end{center}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{References}
+
+\begin{itemize}
+    \item \textbf{Loshchilov, I., \& Hutter, F. (2019).} Decoupled weight decay regularization. ICLR.
+    
+    \item Kingma, D. P., \& Ba, J. (2015). Adam: A method for stochastic optimization. ICLR.
+    
+    \item Loshchilov, I., \& Hutter, F. (2016). SGDR: Stochastic gradient descent with warm restarts. ICLR.
+    
+    \item Zhang, G., et al. (2018). Three mechanisms of weight decay regularization. arXiv preprint.
+\end{itemize}
+
+\vfill
+\begin{center}
+\Large \textbf{Thank You for your attention!}
+\vspace{0.3em}
+\\
+\normalsize All questions are welcome
+\end{center}
+\end{frame}
+
+% ========== Backup Slides ==========
+\appendix
+
+\begin{frame}
+\frametitle{Backup: Algorithm Comparison}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{0.45\textwidth}p{0.45\textwidth}}
+\toprule
+\textbf{Adam (L2)} & \textbf{AdamW} \\
+\midrule
+$g_t = \nabla f + \textcolor{red}{\lambda \theta_t}$ & $g_t = \nabla f$ \\
+$m_t = \beta_1 m_{t-1} + (1-\beta_1)g_t$ & $m_t = \beta_1 m_{t-1} + (1-\beta_1)g_t$ \\
+$v_t = \beta_2 v_{t-1} + (1-\beta_2)g_t^2$ & $v_t = \beta_2 v_{t-1} + (1-\beta_2)g_t^2$ \\
+$\hat{m}_t = m_t/(1-\beta_1^t)$ & $\hat{m}_t = m_t/(1-\beta_1^t)$ \\
+$\hat{v}_t = v_t/(1-\beta_2^t)$ & $\hat{v}_t = v_t/(1-\beta_2^t)$ \\
+$\theta_t = \theta_{t-1} - \alpha\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}$ & $\theta_t = \theta_{t-1} - \alpha\frac{\hat{m}_t}{\sqrt{\hat{v}_t}+\epsilon}$ \textcolor{blue}{$- \lambda\theta_{t-1}$} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Key difference:} Weight decay is applied \textit{after} adaptive scaling in AdamW
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Backup: Recommended Hyperparameters}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Task} & \textbf{Learning Rate $\alpha$} & \textbf{Weight Decay $\lambda_{norm}$} \\
+\midrule
+Image (small) & 0.001 & 0.025 - 0.05 \\
+Image (large) & 0.001 & 0.01 - 0.025 \\
+NLP (Transformer) & 0.0001 - 0.0003 & 0.01 \\
+Generative & 0.0001 - 0.001 & 0.0 - 0.01 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{1em}
+
+\textbf{General advice:}
+\begin{itemize}
+    \item Start with $\alpha=0.001$, $\lambda_{norm}=0.025$
+    \item Use cosine annealing or warm restarts
+    \item Tune $\alpha$ and $\lambda$ independently (they're decoupled!)
+\end{itemize}
+
+\end{frame}
+
+\end{document}
