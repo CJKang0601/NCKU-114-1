@@ -1,0 +1,277 @@
+\documentclass{beamer}
+\usetheme{AnnArbor}
+\usecolortheme{spruce}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{ragged2e} 
+
+
+\setbeamertemplate{headline}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=3.5ex,dp=1.5ex]{section in head/foot}%
+    \usebeamerfont{section in head/foot}%
+    \fontsize{8pt}{10pt}\selectfont%
+    \insertsectionnavigationhorizontal{\paperwidth}{}{\hskip0pt plus1fill}{\hskip0pt plus1filll}
+  \end{beamercolorbox}%
+  }
+}
+
+% Custom footer
+\setbeamertemplate{footline}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+    \usebeamerfont{author in head/foot}\insertshortauthor
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+    \usebeamerfont{title in head/foot}\insertshorttitle
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+    \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{2em}
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+% ==============================================================
+% Title Page Info
+% ==============================================================
+\title[Opt. Theory Mid-Term 3]{Optimization Theory And Application\\Mid-Term Presentation 3}
+\subtitle{Part 1: Homework Q\&A\\Part 2: PRIME (ADMM-Adam Application)}
+\author[TEAM 5]{Min-Tso Ko RE6144019\\ Yu-Jou Hsiao RE6141045\\Cheng-Jun Kang RE6144051}
+\institute{Dept. of Data Science, NCKU}
+\date{December 15, 2025}
+
+\begin{document}
+
+% Slide 1: Title
+\frame{\titlepage}
+
+% Slide 2: Outline
+\begin{frame}
+\frametitle{Outline}
+\tableofcontents
+\end{frame}
+
+% ==============================================================
+% PART 1: Homework
+% ==============================================================
+\section{Part I: Homework Q\&A}
+
+\begin{frame}
+\frametitle{Q1-Q4: Deep Learning  vs. Convex Optimization }
+
+\begin{table}[h]
+\centering
+\renewcommand{\arraystretch}{1.75}
+\begin{tabular}{l|p{0.3\textwidth}|p{0.3\textwidth}}
+\toprule
+& \textbf{Advantage (Pros)} & \textbf{Disadvantage (Cons)} \\
+\midrule
+\textbf{Deep Learning (DL)} & 
+\textbf{Q1:} No heavy math required. (Data-driven feature extraction) & 
+\textbf{Q3:} Requires Big Data to generalize well. \\
+\hline
+\textbf{Convex Opt. (CO)} & 
+\textbf{Q2:} Does not rely on Big Data. (Math-driven rigor) & 
+\textbf{Q4:} Involves heavy mathematics and derivations. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Q5-Q6: The ADMM-Adam Solution}
+
+\begin{block}{Q5: How does ADMM-Adam theory avoid using big data?}
+\textbf{Ans:} Even with small data, it can still extract useful information/statistics by leveraging \textbf{Convex Geometry} (regularizers) to guide the optimization process.
+\end{block}
+
+\vspace{1em}
+
+\begin{block}{Q6: How does ADMM-Adam theory avoid using heavy math?}
+\textbf{Ans:} It extracts features to design a simple convex regularizer. By using a \textbf{Deep Network (Adam)} to handle the complex mapping, we avoid the need to derive complex mathematical closed-form solutions.
+\end{block}
+
+\end{frame}
+
+% ==============================================================
+% PART 2: PRIME (Paper Summary)
+
+% ==============================================================
+\section{Part II: PRIME (ADMM-Adam Application)}
+
+\begin{frame}
+\frametitle{Paper Overview}
+
+\textbf{Title:} PRIME: Unsupervised Multispectral Unmixing Using Virtual Quantum Prism and Convex Geometry 
+
+\vspace{1em}
+
+\textbf{Problem Statement: The "Underdetermined" Challenge}
+\begin{itemize}
+    \item \textbf{Multispectral Images (MSI):} Often have limited spatial resolution (Mixed-Pixel Phenomenon).
+    \item \textbf{The Gap:} Standard Unmixing requires Bands ($P$) $>$ Sources ($N$).
+    \item \textbf{Reality:} Satellites often have few bands (e.g., $P=4$) but many materials (e.g., $N=6$).
+    \item \textbf{Current State:} Methods like VCA and NMF fail when $P < N$ .
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Proposed Solution: PRIME}
+
+\begin{columns}
+\column{0.7\textwidth}
+\textbf{Core Innovation: Virtual Quantum Prism ($f$)}
+\begin{itemize}
+    \item PRIME inserts a virtual prism to split the limited MSI ($Z_m$) into a virtual Hyperspectral Image ($Z_h$).
+    \item \textbf{Note:} This ``virtual HSI'' does not correspond to any real 
+      HSI sensor—it's a mathematically constructed image to enable unmixing.
+    \item \textbf{Transformation:} 
+    $$ P < N \xrightarrow{\text{Prism } f} M > N $$
+    \item Turns an unsolvable underdetermined problem into a solvable Virtual HU problem.
+\end{itemize}
+
+\column{0.3\textwidth}
+\centering
+% \includegraphics[width=\textwidth]{prism_diagram.png} 
+% Placeholder for Prism concept (Fig 1 or 2 in paper)
+\begin{beamercolorbox}[wd=\linewidth,ht=4cm,sep=1em,center,rounded=true,shadow=true]{block body example}
+\footnotesize
+\textbf{Concept:} \\
+$Z_m$ (4 bands) \\
+$\downarrow$ \\
+\textbf{Prism $f$} \\
+$\downarrow$ \\
+$Z_h$ (8+ bands) \\
+$\downarrow$ \\
+Unmixing ($A, S$)
+\end{beamercolorbox}
+\end{columns}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{The CODE Framework (Methodology)}
+
+PRIME is a perfect example of \textbf{CODE (Convex Optimization + Deep Learning)}.
+
+\vspace{1em}
+
+\textbf{1. Deep Learning Part (Adam):}
+\begin{itemize}
+    \item \textbf{Model:} QUEEN (Quantum Deep Network) acts as the function $f$.
+    \item \textbf{Role:} Learns the "Light Splitting" physics to generate the virtual HSI ($Z_h$).
+\end{itemize}
+
+\vspace{0.5em}
+
+\textbf{2. Convex Optimization Part (ADMM/Geometry):}
+\begin{itemize}
+    \item \textbf{Model:} HyperCSI (Hyperplane-based Craig Simplex Identification).
+    \item \textbf{Role:} Solves the unmixing problem on $Z_h$ using Minimum Volume ($V(A)$) and Sparsity ($||S||_1$) regularization .
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Optimization Algorithm}
+
+The objective function combines Data Fitting (DL) and Geometry Regularization (CO):
+
+\begin{equation*}
+\min_{A, S, Z_h, f} \underbrace{DF(A, S, Z_h, f)}_{\text{\textcolor{red}{Network Learning}}} + \lambda \underbrace{(V(A) + ||S||_1 + REG_f)}_{\text{\textcolor{blue}{Convex Regularization}}}
+\end{equation*}
+
+\vspace{1em}
+
+\textbf{Alternating Optimization Strategy (Algorithm 1):}
+\begin{enumerate}
+    \item \textbf{Update $f$ (Prism):} Using \textbf{Adam} optimizer to minimize fitting error.
+    \item \textbf{Update $Z_h$ (Virtual HSI):} Projecting onto non-negative space.
+    \item \textbf{Update $A, S$ (Unmixing):} Using \textbf{HyperCSI} (Fast Convex Geometry method).
+\end{enumerate}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Experimental Results (Quantitative)}
+
+\textbf{Scenario:} Unmixing $N=6$ sources from only $P=4$ bands (Underdetermined).
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llcc}
+\toprule
+\textbf{Dataset} & \textbf{Method} & \textbf{SAM ($\downarrow$)} & \textbf{RMSE ($\downarrow$)} \\
+\midrule
+\multirow{3}{*}{Vancouver Island} & VCA & 13.32 & 0.30 \\
+ & NMF & 12.89 & 0.24 \\
+ & \textbf{PRIME (Ours)} & \textbf{6.54} & \textbf{0.16} \\
+\midrule
+\multirow{3}{*}{Montrose} & VCA & 3.85 & 0.16 \\
+ & NMF & 4.13 & 0.20 \\
+ & \textbf{PRIME (Ours)} & \textbf{2.21} & \textbf{0.09} \\
+\bottomrule
+\end{tabular}
+\caption{Comparison with state-of-the-art HU methods adapted for MU.}
+\end{table}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Experimental Results (Visual)}
+
+\begin{columns}
+\column{0.4\textwidth}
+\begin{itemize}
+    \item \textbf{VCA \& NMF:} Fail to extract correct signatures; Abundance maps are noisy or empty (due to $P < N$).
+    \item \textbf{PRIME:} Successfully separates 6 sources from 4 bands. The abundance maps recover clear spatial details matching the Ground Truth (GT).
+\end{itemize}
+
+\column{0.5\textwidth}
+\centering
+\vspace*{-1cm}
+\includegraphics[width=0.6\linewidth]{Opt.3.jpg} \\
+
+\end{columns}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Conclusion}
+
+\begin{block}{Summary}
+PRIME is the first attempt to resolve the \textbf{Underdetermined ($P < N$)} Multispectral Unmixing problem.
+\end{block}
+
+\vspace{1em}
+
+\textbf{Key Takeaways:}
+\begin{itemize}
+    \item \textbf{Virtual Prism:} Breaks the physical sensor limitations by generating virtual hyperspectral data.
+    \item \textbf{CODE Theory:} Successfully blends the flexibility of Deep Learning (Adam) with the theoretical guarantees of Convex Geometry.
+    \item \textbf{Impact:} Enables accurate material identification even with low-spectral-resolution sensors.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\vfill
+\begin{center}
+\Large \textbf{Thank You for your attention!}
+\vspace{0.3em}
+\\
+\normalsize All questions are welcome
+\end{center}
+\end{frame}
+\end{document}
