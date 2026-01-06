@@ -1,0 +1,374 @@
+\documentclass{beamer}
+\usetheme{AnnArbor}
+\usecolortheme{spruce}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs} % 用於更好看的表格線條
+
+% 自定義 headline 顯示所有章節
+\setbeamertemplate{headline}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=3.5ex,dp=1.5ex]{section in head/foot}%
+    \usebeamerfont{section in head/foot}% 使用較小字體
+    \fontsize{8pt}{10pt}\selectfont% 設定字體大小為 8pt
+    \insertsectionnavigationhorizontal{\paperwidth}{}{\hskip0pt plus1fill}{\hskip0pt plus1filll}
+  \end{beamercolorbox}%
+  }
+}
+
+% Footer with section progress
+\setbeamertemplate{footline}
+{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+    \usebeamerfont{author in head/foot}\insertshortauthor
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+    \usebeamerfont{title in head/foot}\insertshorttitle
+  \end{beamercolorbox}%
+  \begin{beamercolorbox}[wd=.333333\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+    \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{2em}
+    \insertframenumber{} / \inserttotalframenumber\hspace*{2ex} 
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+\title{SGD with Momentum (SGDM)}
+\author[TEAM 5]{Min-Tso Kov RE6144019\\ Yu-Jou Hsiao RE6141045\\Cheng-Jun Kang RE6144051 }
+\institute{DS @ NCKU}
+\date{\today} 
+
+\begin{document}
+
+\frame{\titlepage}
+
+% Table of Contents
+\begin{frame}
+\frametitle{Outline}
+\tableofcontents
+\end{frame}
+
+% ========== Section 1 ==========
+\section{Background}
+
+\begin{frame}
+\frametitle{Background and Motivation}
+
+\textbf{Problems with Standard SGD}
+
+Standard Stochastic Gradient Descent update rule:
+\[
+\theta_{t+1} = \theta_t - \alpha \nabla f(\theta_t)
+\]
+
+\begin{columns}[T] % 使用 columns 環境來並排文字和圖片
+    \begin{column}{0.5\textwidth}
+        \textbf{Main Issues:}
+        \begin{itemize}
+            \item \textbf{Slow Convergence}
+            \item \textbf{Oscillation} in ravines
+            \item \textbf{Sensitive Learning Rate}
+        \end{itemize}
+        \vspace{1em}
+        % \textbf{Motivation:} Can we use momentum to accelerate optimization?
+    \end{column}
+    \begin{column}{0.5\textwidth}
+        % <-- 已新增：建議在此處插入 SGD 震盪的視覺化圖片
+        \begin{figure}
+            \includegraphics[width=0.6\linewidth]{SGD.jpg}
+            \caption{\footnotesize SGD often oscillates in narrow valleys.}
+        \end{figure}
+    \end{column}
+\end{columns}
+
+\end{frame}
+
+% ========== Section 2 ==========
+\section{Intuition}
+
+\begin{frame}
+\frametitle{Physical Intuition}
+
+\textbf{Analogy: A Ball Rolling Down a Hill}
+
+\begin{columns}[T]
+    \begin{column}{0.4\textwidth}
+        % <-- 已新增：建議在此處插入小球滾下山的示意圖
+        \begin{figure}
+            \includegraphics[width=\linewidth]{ball_rolling.png} % <-- 請替換成您的圖片檔名
+        \end{figure}
+    \end{column}
+    \begin{column}{0.6\textwidth}
+        \begin{center}
+        \begin{tabular}{c|c}
+        \textbf{Physical Concept} & \textbf{Optimization} \\ \hline
+        Position & Parameter $\theta$ \\
+        Velocity & Momentum $v$ \\
+        Gravity (Slope) & Gradient $\nabla f$ \\
+        Friction & Momentum $\mu$
+        \end{tabular}
+        \end{center}
+        \vspace{1em}
+        \textbf{Key Idea:} Consider not only the current gradient, but also the historical direction.
+    \end{column}
+\end{columns}
+
+\end{frame}
+
+% ========== Section 3 ==========
+\section{Derivation}
+
+\begin{frame}
+\frametitle{Mathematical Derivation}
+
+\textbf{Momentum SGD Algorithm}
+
+\textbf{Initialization:}
+\[
+v_0 = 0 \quad \text{(Initial velocity is zero)}
+\]
+
+\textbf{Update at Each Iteration ($t$):}
+
+\textbf{Step 1:} Compute Gradient
+\[
+g_t = \nabla f(\theta_t)
+\]
+
+% <-- 已修改：更新為更常見的公式表達
+\textbf{Step 2:} Update Momentum (Accumulate Gradients)
+\[
+v_{t+1} = \mu \cdot v_t + g_t 
+\]
+
+\textbf{Step 3:} Update Parameters (Apply Momentum with LR)
+\[
+\theta_{t+1} = \theta_t - \alpha \cdot v_{t+1}
+\]
+
+\vspace{0.5em}
+
+\textbf{Hyperparameters:}
+\begin{itemize}
+    \item $\alpha$: Learning rate, typically $0.01 \sim 0.1$
+    \item $\mu$: Momentum coefficient, typically $0.9 \sim 0.99$
+\end{itemize}
+
+\end{frame}
+
+% ========== Section 4 ==========
+\section{Properties}
+
+\begin{frame}
+\frametitle{Mathematical Properties Analysis}
+
+\textbf{Understanding through Expansion}
+
+Expanding the parameter update term:
+\begin{align*}
+\theta_{t+1} &= \theta_t - \alpha v_{t+1} \\
+&= \theta_t - \alpha (\mu v_t + g_t) \\
+&= \theta_t - \alpha (\mu (\mu v_{t-1} + g_{t-1}) + g_t) \\
+&= \theta_t - \alpha \sum_{i=0}^{t} \mu^{t-i} g_i
+\end{align*}
+
+\vspace{0.5em}
+
+\textbf{Key Insights:}
+\begin{itemize}
+    \item The current step considers a \textbf{weighted sum of all historical gradients}.
+    \item More recent gradients have larger weights (exponential decay).
+    \item Consistent gradient direction $\rightarrow$ Velocity accumulation, faster convergence.
+    % \item Oscillating gradient direction $\rightarrow$ Mutual cancellation, reduced oscillation.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Mathematical Properties (Continued)}
+
+\textbf{Effective Learning Rate}
+
+When gradients are stable ($g_t \approx g$), the steady-state velocity update:
+\[
+\Delta \theta \approx - \alpha \left( \frac{1}{1-\mu} \right) g
+\]
+
+\textbf{Practical Effect:} The step size is amplified by a factor of $\displaystyle \frac{1}{1-\mu}$.
+
+\vspace{1em}
+
+\textbf{Example:} When $\mu = 0.9$
+\[
+\text{Effective Step Size} = \frac{1}{1-0.9} = 10
+\]
+The step size is amplified by \textbf{10 times}!
+
+\end{frame}
+
+% ========== Section 5 ==========
+\section{Effects}
+
+\begin{frame}
+\frametitle{Effects and Advantages}
+
+\begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+        \textbf{Three Major Advantages}
+        \begin{enumerate}
+            \item \textbf{Accelerated Convergence}
+            \begin{itemize}
+                \item Accumulates velocity
+                \item Faster progress
+            \end{itemize}
+            
+            \item \textbf{Reduced Oscillation}
+            \begin{itemize}
+                \item Cancels opposing gradients
+                \item More stable training
+            \end{itemize}
+            
+            \item \textbf{Escape Saddle Points}
+            \begin{itemize}
+                \item Inertia helps pass flat regions
+            \end{itemize}
+        \end{enumerate}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+        % <-- 已新增：建議在此處插入 SGD vs SGDM 的收斂路徑比較圖
+        \begin{figure}
+            \includegraphics[width=\linewidth]{sgd_vs_sgdm.jpg} % <-- 請替換成您的圖片檔名
+            \caption{\footnotesize SGDM (blue) converges faster and more smoothly than SGD (red).}
+        \end{figure}
+    \end{column}
+\end{columns}
+
+\end{frame}
+
+% ========== Section 6 ==========
+\section{Impact}
+
+\begin{frame}
+\frametitle{Evolution of Optimizers}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{l}
+SGD (1951) \\
+\quad $\downarrow$ \\
+\textbf{SGD + Momentum (1999)} $\leftarrow$ This Paper's Focus \\
+\quad $\downarrow$ \\
+\quad $\bullet$ Nesterov Accelerated Gradient (NAG, 2013) \\
+\quad \quad $\rightarrow$ NAdam (2016) \\
+\quad $\bullet$ Adam (2015) - Combines \textbf{Momentum} + RMSprop \\
+\quad \quad $\rightarrow$ AdamW (2019) \\
+\quad \quad $\rightarrow$ RAdam (2019) \\
+\end{tabular}
+\end{center}
+
+\vspace{1em}
+\textbf{Core Position:} Momentum is a cornerstone of modern optimizers.
+
+\end{frame}
+
+% <-- 已新增：SGDM vs Adam 的比較表格
+\begin{frame}
+\frametitle{Comparison: SGDM vs. Adam}
+
+\begin{tabular}{l p{4.0cm} p{4.0cm}}
+\toprule
+\textbf{Feature} & \textbf{SGD with Momentum (SGDM)} & \textbf{Adam} \\
+\midrule
+\textbf{Core Idea} & First-order momentum (historical gradients) & First-order momentum \textbf{and} Second-order momentum (historical squared gradients) \\
+\addlinespace
+\textbf{Learning Rate} & Global and fixed & Per-parameter adaptive learning rate \\
+\addlinespace
+\textbf{Pros} & Better generalization, stable in later stages & Fast initial convergence, less sensitive to LR choice \\
+\addlinespace
+\textbf{Cons} & Requires careful LR tuning & May converge to poorer local optima, higher memory usage \\
+\addlinespace
+\textbf{Best For} & Computer Vision (CNNs) & NLP (Transformers), Fast Prototyping \\
+\bottomrule
+\end{tabular}
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Applications in Computer Vision}
+
+\textbf{Practical Application Cases}
+
+\textbf{Image Classification:}
+\begin{itemize}
+    \item ResNet, VGG training commonly uses SGD + Momentum
+    \item Hyperparameters: $\mu = 0.9$, $\alpha = 0.1$ (with decay)
+\end{itemize}
+
+\textbf{Object Detection / Segmentation:}
+\begin{itemize}
+    \item Faster R-CNN, YOLO, U-Net series
+    \item Momentum helps stabilize training, especially with large batches
+\end{itemize}
+
+\vspace{1em}
+\textbf{Current Trends:}
+\begin{itemize}
+    \item \textbf{CNN-based Models:} Still often prefer \textbf{SGDM} for better final performance.
+    \item \textbf{Transformer-based Models:} Almost always use \textbf{Adam} or its variants (AdamW).
+\end{itemize}
+
+\end{frame}
+
+% ========== Section 7 ==========
+\section{Summary}
+
+\begin{frame}
+\frametitle{Summary}
+
+\textbf{Core Contributions}
+\begin{enumerate}
+    \item \textbf{Introduced Physical Intuition} into optimization
+    \item \textbf{Simple and Effective}, adding only one hyperparameter ($\mu$)
+    \item \textbf{Established a Foundation} for modern optimizers like Adam
+\end{enumerate}
+
+\vspace{1em}
+% <-- 已修改：更新為新的公式
+\textbf{Key Formulas Recap}
+\[
+v_{t+1} = \mu \cdot v_t + g_t
+\]
+\[
+\theta_{t+1} = \theta_t - \alpha \cdot v_{t+1}
+\]
+
+\vspace{1em}
+\textbf{Momentum is not just a trick, but a fundamental concept in deep learning optimization.}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{References}
+\begin{itemize}
+    \item Qian, N. (1999). \textit{On the momentum term in gradient descent learning algorithms}. Neural Networks.
+    
+    \item Sutskever, I., et al. (2013). \textit{On the importance of initialization and momentum in deep learning}. ICML.
+    
+    \item Kingma, D. P., \& Ba, J. (2015). \textit{Adam: A method for stochastic optimization}. ICLR.
+\end{itemize}
+
+\vfill
+\begin{center}
+\Large \textbf{Thank you for your attention}
+\vspace{0.5em}
+\\
+\normalsize Any Questions?
+\end{center}
+\end{frame}
+
+\end{document}
